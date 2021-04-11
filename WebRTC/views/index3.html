@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+
+<head>
+
+	<title>WebRTC Sample App</title>
+	<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+	<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<style>
+		.single {
+			padding: 30px 15px;
+			margin: auto;
+			background: #242323;
+			border: 0px solid #f0f0f000;
+		}
+
+		.single h3.side-title {
+			margin: 0;
+			margin-bottom: 10px;
+			padding: 0;
+			font-size: 20px;
+			color: rgb(218, 218, 218);
+			text-transform: uppercase;
+		}
+
+		.single h3.side-title:after {
+			content: '';
+			width: auto;
+			height: 2px;
+			background: #d4d4d4;
+			display: block;
+			margin-top: 10px;
+		}
+
+		.single ul {
+			margin-bottom: 0;
+		}
+
+		.single li a {
+			color: rgb(218, 218, 218);
+			font-size: 20px;
+			text-align:center;
+			text-transform: uppercase;
+			border-bottom: 1px solid #8b8b8b;
+			line-height: 40px;
+			
+			display: block;
+			text-decoration: none;
+		}
+
+		.single li a:hover {
+			color: #ff173c;
+		}
+
+		.single li:last-child a {
+			border-bottom: 0;
+		}
+	</style>
+</head>
+
+<body style="background-color:#202020;">
+	<br>
+	<br>
+	<center><img src="img/webrtclogo.png"></center>
+
+	<center><b>
+			<h1>
+				<font color="white">WebRTC
+			</h1>
+		</b></center>
+	</font>
+
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-8 mx-auto">
+				<!-- Category -->
+				<div class="single category">
+					<center><h3 class="side-title">Public ChatRoom</h3></center>
+					<ul class="list-unstyled">
+						<!-- <li><a href="" title=""><span class="pull-right">13</span></a></li>
+						<li><a href="" title=""><span class="pull-right">13</span></a></li>
+						<li><a href="" title=""><span class="pull-right">13</span></a></li>
+						<li><a href="" title=""><span class="pull-right">13</span></a></li>
+						<li><a href="" title=""><span class="pull-right">13</span></a></li>
+						<li><a href="" title=""><span class="pull-right">13</span></a></li>
+						<li><a href="" title=""><span class="pull-right">13</span></a></li>
+						<li><a href="" title=""><span class="pull-right">13</span></a></li> -->
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+
+</html>
+
+<script>
+	window.onload = function () {
+		fetch('/rooms')
+			.then(function (response) {
+				return response.json();
+			})
+			.then(function (rooms) {
+				const arr = rooms.map((roomName) => `<li><a href="/room/${roomName}" title="">${roomName}<span class="pull-right"></span></a></li>`);
+				const ul = document.querySelector('.list-unstyled');
+				ul.innerHTML = arr.join('');
+			});
+	}
+
+
+</script>
