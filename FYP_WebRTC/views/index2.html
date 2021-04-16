@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <style> 
+	
+	
+.buttonsize{
+    height:35px;
+    width:120px;
+}
+
+#rname{
+    height:30px;
+    font-size:14pt;
+}
+
+	
+	</style>
+	
+	
+	
+	<title>WebRTC Sample App</title>
+    <script src="/socket.io/socket.io.js"></script>
+
+  </head>
+
+  <body style="background-color:#202020;">
+    <br>
+    <br>
+    <center><img src="img/webrtclogo.png"></center>
+    
+  <center><b><h1><font color="white">WebRTC</h1></b></center>
+  <div class="col-lg-8 mx-auto">
+    <center><h3>Room Name: </h3><input id="rname" type="text"></center></font>
+    <br><br>
+    <center>
+      <button onclick="joinRoom()" class="buttonsize">JOIN</button>
+      <button onclick="randomName()" class="buttonsize">RANDOM</button>
+    </center>
+    <br>
+    <center>
+      <button onclick="Topubliclist()" class="buttonsize">PUBLIC CHATROOM</button>
+    </center>
+  </div>
+  
+	
+<script>
+
+	function Topubliclist() {
+	
+	window.open("index3.html")
+	
+	}
+
+	function joinRoom(){
+	
+	var roomid = document.getElementById("rname").value;
+	
+	window.location.assign("/room/"+roomid,config='target="_blank"height=500,width=500');
+	
+	}
+
+	function randomName() {
+	
+	var num = Math.random()*10000000;
+
+    document.getElementById("rname").value = Math.round(num);
+	}
+
+</script>
+   
+  </body>
+</html>

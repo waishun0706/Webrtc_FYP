@@ -1,0 +1,344 @@
+<!doctype html>
+
+<html>
+	<head lang="en">
+	<meta charset="UTF-8">
+	<title>{{roomID}}</title>
+	
+	<style> 
+		
+		#mesgSect #vdo2{
+		width:70%;
+
+		float:left;
+		}
+		#mesgSect #vdo1{
+		width:30%;
+
+		float:right;
+		}
+		
+		#msglog, #messageInput {
+			border: 1px solid #ccc;
+			width: 100%;
+			height: 60px;
+			overflow-y: auto;
+			font-size: 14px;
+		}
+		#messageInput {
+		height: 40px;
+		width: 100%;
+    background-color: #202020;
+    color: #FFFFFF;
+		
+		}
+		.message {
+		line-height: 22px;
+		}
+		.message .user {
+		padding-right: 5px;
+		padding-left: 5px;
+		color: #ca675c;
+		}
+		.sysMsg {
+		color: #c1bfbf;
+		padding-right: 5px;
+		padding-left: 5px;
+		font-size: 12px;
+		}
+		#users {
+		width: 490px;
+		padding: 0 5px 5px;
+		}
+		
+		.none {
+      -webkit-filter: none;
+      filter: none;
+    }
+    .blur {
+      -webkit-filter: blur(3px);
+      filter: blur(3px);
+    }
+    .grayscale {
+      -webkit-filter: grayscale(1);
+      filter: grayscale(1);
+    }
+    .invert {
+      -webkit-filter: invert(1);
+      filter: invert(1);
+    }
+    .sepia {
+      -webkit-filter: sepia(1);
+      filter: sepia(1);
+    }
+	
+	video {
+      object-fit: cover;
+    }
+		
+  body {
+    background-color: #202020;
+    }
+
+  
+  
+	</style>
+	
+	<link rel="stylesheet" href="/css/main.css">
+	
+	
+	</head>
+	
+<body>
+
+     
+  <font color="white"> 
+
+    <table class="table">
+
+	<b><center>WebRTC</center></b>
+   <thead>
+    
+   </thead>
+   <tbody>
+      <tr>
+         <td><b>Name:</b></td>
+         <td><span id="userName"></span></td>
+      </tr>
+      <tr>
+         <td><b>Room:</b></td>
+         <td> {{roomID}} </span></td>
+      </tr>
+      <tr>
+         <td><b>Users:</b></td>
+         <td><div id="users">{{users}}</div></td>
+      </tr>
+   </tbody>
+</table>
+
+<b>Share the link to invite your fd: </b><b id="link" style="color:#ffffff"></b>
+	
+	<div id='mesgSect' >
+		<div id='error-container'></div>
+		<div id='name-container'></div>
+		<br>
+			
+		<br>
+	
+		<div id='vdo1'>
+		<video style="border-style:none;width:100%" id='myVideoTag' autoplay></video>
+		</div>
+		
+		
+		<div id='vdo2'>
+		<video  style="border-style:none;width:99%" id='theirVideoTag' autoplay></video>
+		</div>
+
+    <button id='signalBtn' type='button'>Real-time Video/Audio</button>
+		<div id='filter'>
+		<label for="select">Filter: </label>
+		<select id="filter">
+		<option value="none">None</option>
+		<option value="blur">Blur</option>
+		<option value="grayscale">Grayscale</option>
+		<option value="invert">Invert</option>
+		<option value="sepia">Sepia</option>
+		</select>
+		</div>
+    
+		<div id="msglog">
+		</div>
+		<textarea name="message" id="messageInput"></textarea>
+		<button id="joinOrLeave">Leave Room</button>
+		<input id="my-file" type="file"/>
+	</div>
+	</font>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="/js/jquery.js"></script>
+	<script src="/js/filter.js"></script>
+	<script src="/webrtc-adapter/adapter.js"></script>
+
+	
+	<script>
+	//const adapter = require(‘webrtc-adapter’);
+	function getURL() {
+    var url = document.URL;
+    document.getElementById("link").innerHTML = url;
+	}
+	window.onload=getURL();
+	
+	
+	$(function () {
+      // ----------设置昵称-------------
+      var userName = '';
+		
+		
+		while ($('#userName').text().trim() === '') {
+        userName = prompt("Please Enter your username","");
+        $('#userName').text(userName);
+      }
+		
+		
+		
+		
+      var socket = io();
+	  
+	  var mesgArea = document.querySelector('#mesg-container');
+	  var signalArea = document.querySelector('#signal-container');
+	  var myVideoArea = document.querySelector('#myVideoTag');
+      var theirVideoArea = document.querySelector('#theirVideoTag');
+	  
+	  
+	// join
+      socket.on('connect', function () {
+        socket.emit('join', userName);
+      });
+	
+	
+	 var rtcPeerConn;
+
+     var configuration = {
+        'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]
+      };
+	
+	 document.querySelector('#signalBtn').addEventListener('click', sendSignal, false);
+	 
+	 function sendSignal() {
+          socket.emit('signal', {'type': 'signalCall', 'message': "RTC Calling"});
+      }
+	 
+	 socket.on('signalMsg', function(data) {
+		
+		if (!rtcPeerConn) {
+          startSignaling();
+        }
+
+        if (data.type != 'signalCall') { // data type is not a signal call but an ICE candidate
+          // change the JSON text to object
+          var msgObj = JSON.parse(data.message);
+          if (msgObj.sdp) {
+            rtcPeerConn.setRemoteDescription(new RTCSessionDescription(msgObj.sdp), function() {
+              // if we received an offer, we need to answer
+              if (rtcPeerConn.remoteDescription.type == 'offer') {
+                rtcPeerConn.createAnswer(sendLocalDesc, logError);
+              }
+            }, logError);
+          }
+          else {
+            rtcPeerConn.addIceCandidate(new RTCIceCandidate(msgObj.candidate));
+          }
+        }
+      });
+		
+		function startSignaling() {
+			rtcPeerConn = new webkitRTCPeerConnection(configuration);
+		
+			rtcPeerConn.onicecandidate = function(event) {
+			if (event.candidate) {
+            socket.emit('signal', {
+              'type': 'iceCandidate',
+              'message': JSON.stringify({candidate: event.candidate})
+            });
+          }
+		  };
+
+		  rtcPeerConn.onnegotiationneeded = function() {
+          //signalArea.innerHTML += '<div>onnegotiation called....</div>';
+          rtcPeerConn.createOffer(sendLocalDesc, logError);
+        };
+		
+		
+		rtcPeerConn.onaddstream = function(event) {
+          //signalArea.innerHTML = '<div>Going to add their stream...</div>';
+          //theirVideoArea.src = window.URL.createObjectURL(event.stream);
+		  theirVideoArea.srcObject = event.stream;
+        }
+		
+		
+		//navigator.mediaDevices.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+								 
+        navigator.mediaDevices.getUserMedia(
+		{audio: true, video: true}).then(function(stream) {
+          //signalArea.innerHTML += '<div>Going to display my stream...</div>';
+		  //const videoTracks = stream.getVideoTracks();
+		  //window.stream = stream;
+          //myVideoArea.srcObject = stream;
+			if ("srcObject" in myVideoArea) {
+		    myVideoArea.srcObject = stream;
+		  } else {
+		    // Avoid using this in new browsers
+		    myVideoArea.src = window.URL.createObjectURL(stream);
+		  }
+          // Previously stream.getTrack;
+          /*
+          stream.getTracks().forEach(function(track) {
+            rtcPeerConn.addTrack(track, stream);
+          });
+          */
+          rtcPeerConn.addStream(stream);
+        }, logError);
+      }
+
+      function sendLocalDesc(desc) {
+        rtcPeerConn.setLocalDescription(desc, function() {
+          //signalArea.innerHTML += '<div>Sending local description...</div>';
+          socket.emit('signal', {
+            type: 'SDP',
+            message: JSON.stringify({sdp: rtcPeerConn.localDescription})
+          });
+        }, logError);
+	  }
+	  
+	  function logError(error) {
+        //signalArea.innerHTML += '<div>Error:- ' + error.name + ': ' + error.message + '</div>';
+      };
+	  
+	 
+	  
+	 
+	
+	// 監聽消息
+      socket.on('msg', function (userName, msg) {
+        var message = '' +
+            '<div class="message">' +
+            '  <span class="user">' + userName + ': </span>' +
+            '  <span class="msg">' + msg + '</span>' +
+            '</div>';
+        $('#msglog').append(message);
+        $('#msglog').scrollTop($('#msglog')[0].scrollHeight);  
+      });
+
+	  
+	// 監聽系统消息
+      socket.on('sys', function (sysMsg, users) {
+        var message = '<div class="sysMsg">' + sysMsg + '</div>';
+        $('#msglog').append(message);
+
+        $('#count').text(users.length);
+        $('#users').text(users);
+      });
+	  
+	  
+	// send message
+      $('#messageInput').keydown(function (e) {
+        if (e.which === 13) {
+          e.preventDefault();
+          var msg = $(this).val();
+          $(this).val('');
+
+          socket.send(msg);
+        }
+      });
+
+	// leave room
+      $('#joinOrLeave').click(function () {
+       window.close();
+      });
+    });
+
+	
+	</script>
+  
+	</body>
+	
+</html>
